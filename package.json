@@ -1,0 +1,91 @@
+{
+  "name": "gitmood",
+  "displayName": "GitMood - Emotional Pulse of Your Codebase",
+  "description": "Analyze your Git commit history with AI to understand team sentiment and code quality",
+  "version": "0.0.1",
+  "publisher": "gitmood",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/gitmood"
+  },
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Data Science",
+    "Machine Learning",
+    "Visualization"
+  ],
+  "keywords": [
+    "git",
+    "sentiment",
+    "ai",
+    "analytics",
+    "team"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitmood-sidebar-container",
+          "title": "GitMood",
+          "icon": "$(pulse)"
+        }
+      ]
+    },
+    "views": {
+      "gitmood-sidebar-container": [
+        {
+          "type": "webview",
+          "id": "gitmood-sidebar",
+          "name": "Analysis"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "GitMood",
+      "properties": {
+        "gitmood.geminiApiKey": {
+          "type": "string",
+          "description": "Your Google Gemini API key for AI analysis"
+        },
+        "gitmood.commitLimit": {
+          "type": "number",
+          "default": 20,
+          "description": "Maximum number of commits to analyze"
+        },
+        "gitmood.analyzeType": {
+          "type": "string",
+          "enum": [
+            "full-diff",
+            "stats-only"
+          ],
+          "default": "full-diff",
+          "description": "Type of git data to analyze: full-diff (detailed) or stats-only (faster)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/test-electron": "^2.3.0",
+    "eslint": "^8.40.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@google/genai": "^1.26.0"
+  }
+}
