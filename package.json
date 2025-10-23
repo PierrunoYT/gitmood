@@ -2,7 +2,7 @@
   "name": "gitmood",
   "displayName": "GitMood - Emotional Pulse of Your Codebase",
   "description": "Analyze your Git commit history with AI to understand team sentiment and code quality",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "gitmood",
   "repository": {
     "type": "git",
