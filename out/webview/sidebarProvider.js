@@ -377,7 +377,10 @@ class SidebarProvider {
             />
         </div>
 
-        <button id="analyzeBtn">Analyze Repository</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <button id="saveApiKeyBtn">Save API Key</button>
+            <button id="analyzeBtn">Analyze Repository</button>
+        </div>
         
         <div id="status" class="status"></div>
     </div>
@@ -389,10 +392,25 @@ class SidebarProvider {
     <script>
         const vscode = acquireVsCodeApi();
         const apiKeyInput = document.getElementById('apiKey');
+        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
         const analyzeBtn = document.getElementById('analyzeBtn');
         const status = document.getElementById('status');
         const result = document.getElementById('result');
         const resultContent = document.getElementById('resultContent');
+
+        saveApiKeyBtn.addEventListener('click', () => {
+            const apiKey = apiKeyInput.value.trim();
+            
+            if (!apiKey) {
+                showStatus('Please enter an API key', 'error');
+                return;
+            }
+
+            vscode.postMessage({
+                type: 'saveApiKey',
+                apiKey: apiKey
+            });
+        });
 
         analyzeBtn.addEventListener('click', () => {
             const apiKey = apiKeyInput.value.trim();
