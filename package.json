@@ -48,10 +48,6 @@
       "type": "object",
       "title": "GitMood",
       "properties": {
-        "gitmood.geminiApiKey": {
-          "type": "string",
-          "description": "Your Google Gemini API key for AI analysis"
-        },
         "gitmood.commitLimit": {
           "type": "number",
           "default": 20,

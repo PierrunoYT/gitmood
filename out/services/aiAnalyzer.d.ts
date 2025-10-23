@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 export interface CommitAnalysis {
     message: string;
     sentiment: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
@@ -12,7 +13,9 @@ export interface AnalysisResult {
 }
 export declare class AIAnalyzer {
     private ai;
-    constructor();
+    private secrets;
+    private static readonly API_KEY_SECRET;
+    constructor(secrets: vscode.SecretStorage);
     private initialize;
     analyzeCommits(commitsData: string): Promise<AnalysisResult>;
 }

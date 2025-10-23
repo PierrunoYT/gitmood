@@ -6,14 +6,18 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private gitService: GitService;
   private aiAnalyzer: AIAnalyzer;
+  private secrets: vscode.SecretStorage;
+  private static readonly API_KEY_SECRET = 'gitmood.geminiApiKey';
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     gitService: GitService,
-    aiAnalyzer: AIAnalyzer
+    aiAnalyzer: AIAnalyzer,
+    secrets: vscode.SecretStorage
   ) {
     this.gitService = gitService;
     this.aiAnalyzer = aiAnalyzer;
+    this.secrets = secrets;
   }
 
   public resolveWebviewView(
@@ -49,20 +53,20 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   private async _saveApiKey(apiKey: string) {
-    const config = vscode.workspace.getConfiguration('gitmood');
-    await config.update('geminiApiKey', apiKey, vscode.ConfigurationTarget.Global);
+    // Store API key in encrypted secret storage
+    await this.secrets.store(SidebarProvider.API_KEY_SECRET, apiKey);
     
     this._view?.webview.postMessage({
       type: 'apiKeySaved',
-      message: 'API key saved successfully!'
+      message: 'API key saved securely!'
     });
   }
 
   private async _loadApiKey() {
     if (!this._view) return;
     
-    const config = vscode.workspace.getConfiguration('gitmood');
-    const apiKey = config.get<string>('geminiApiKey', '');
+    // Load API key from encrypted secret storage
+    const apiKey = await this.secrets.get(SidebarProvider.API_KEY_SECRET) || '';
     
     this._view.webview.postMessage({
       type: 'loadApiKey',
@@ -81,9 +85,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    // Verify API key is configured
-    const config = vscode.workspace.getConfiguration('gitmood');
-    const apiKey = config.get<string>('geminiApiKey');
+    // Verify API key is configured in secret storage
+    const apiKey = await this.secrets.get(SidebarProvider.API_KEY_SECRET);
     
     if (!apiKey) {
       this._view?.webview.postMessage({
@@ -100,6 +103,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       });
 
       const workspaceFolder = workspaceFolders[0];
+      
+      // Get configuration settings
+      const config = vscode.workspace.getConfiguration('gitmood');
+      
       // Validate commitLimit to be between 1 and 100
       const rawCommitLimit = config.get<number>('commitLimit', 20);
       const commitLimit = Math.max(1, Math.min(rawCommitLimit, 100));

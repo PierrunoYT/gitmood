@@ -1,50 +1,16 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AIAnalyzer = void 0;
-const vscode = __importStar(require("vscode"));
 const genai_1 = require("@google/genai");
 class AIAnalyzer {
-    constructor() {
+    constructor(secrets) {
         this.ai = null;
-        // Don't initialize here - do it lazily when needed
+        this.secrets = secrets;
         console.log('AIAnalyzer created');
     }
-    initialize() {
-        const config = vscode.workspace.getConfiguration('gitmood');
-        const apiKey = config.get('geminiApiKey');
+    async initialize() {
+        // Load API key from encrypted secret storage
+        const apiKey = await this.secrets.get(AIAnalyzer.API_KEY_SECRET);
         if (!apiKey) {
             throw new Error('Gemini API key not configured. Please enter your API key in the GitMood sidebar.');
         }
@@ -52,7 +18,7 @@ class AIAnalyzer {
     }
     async analyzeCommits(commitsData) {
         if (!this.ai) {
-            this.initialize();
+            await this.initialize();
         }
         const responseSchema = {
             type: genai_1.Type.OBJECT,
@@ -158,4 +124,5 @@ class AIAnalyzer {
     }
 }
 exports.AIAnalyzer = AIAnalyzer;
+AIAnalyzer.API_KEY_SECRET = 'gitmood.geminiApiKey';
 //# sourceMappingURL=aiAnalyzer.js.map

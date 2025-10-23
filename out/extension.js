@@ -42,9 +42,9 @@ const sidebarProvider_1 = require("./webview/sidebarProvider");
 async function activate(context) {
     console.log('GitMood extension is now active');
     const gitService = new gitService_1.GitService();
-    const aiAnalyzer = new aiAnalyzer_1.AIAnalyzer();
+    const aiAnalyzer = new aiAnalyzer_1.AIAnalyzer(context.secrets);
     // Register sidebar provider
-    const sidebarProvider = new sidebarProvider_1.SidebarProvider(context.extensionUri, gitService, aiAnalyzer);
+    const sidebarProvider = new sidebarProvider_1.SidebarProvider(context.extensionUri, gitService, aiAnalyzer, context.secrets);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider('gitmood-sidebar', sidebarProvider));
 }
 function deactivate() {

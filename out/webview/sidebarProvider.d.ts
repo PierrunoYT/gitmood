@@ -6,7 +6,9 @@ export declare class SidebarProvider implements vscode.WebviewViewProvider {
     private _view?;
     private gitService;
     private aiAnalyzer;
-    constructor(_extensionUri: vscode.Uri, gitService: GitService, aiAnalyzer: AIAnalyzer);
+    private secrets;
+    private static readonly API_KEY_SECRET;
+    constructor(_extensionUri: vscode.Uri, gitService: GitService, aiAnalyzer: AIAnalyzer, secrets: vscode.SecretStorage);
     resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, _token: vscode.CancellationToken): void;
     private _saveApiKey;
     private _loadApiKey;

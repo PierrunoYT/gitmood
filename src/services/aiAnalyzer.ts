@@ -17,15 +17,17 @@ export interface AnalysisResult {
 
 export class AIAnalyzer {
   private ai: GoogleGenAI | null = null;
+  private secrets: vscode.SecretStorage;
+  private static readonly API_KEY_SECRET = 'gitmood.geminiApiKey';
 
-  constructor() {
-    // Don't initialize here - do it lazily when needed
+  constructor(secrets: vscode.SecretStorage) {
+    this.secrets = secrets;
     console.log('AIAnalyzer created');
   }
 
-  private initialize() {
-    const config = vscode.workspace.getConfiguration('gitmood');
-    const apiKey = config.get<string>('geminiApiKey');
+  private async initialize() {
+    // Load API key from encrypted secret storage
+    const apiKey = await this.secrets.get(AIAnalyzer.API_KEY_SECRET);
 
     if (!apiKey) {
       throw new Error(
@@ -38,7 +40,7 @@ export class AIAnalyzer {
 
   async analyzeCommits(commitsData: string): Promise<AnalysisResult> {
     if (!this.ai) {
-      this.initialize();
+      await this.initialize();
     }
 
     const responseSchema = {
