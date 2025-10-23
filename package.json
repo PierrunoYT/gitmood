@@ -6,8 +6,9 @@
   "publisher": "gitmood",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/gitmood"
+    "url": "https://github.com/PierrunoYT/gitmood"
   },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.60.0"
   },

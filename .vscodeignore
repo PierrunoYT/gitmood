@@ -1,8 +1,35 @@
+# Build files
 .vscode/**
 .vscode-test/**
 src/**
-.gitignore
-.prettierignore
 tsconfig.json
 *.vsix
-*.md
+
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Node modules (should be bundled)
+node_modules/**
+
+# Development files
+.prettierignore
+.eslintrc.json
+*.map
+
+# Documentation (keep only essential)
+!README.md
+!LICENSE
+BUGS.md
+SECURITY.md
+INSTALL.md
+
+# Test files
+**/*.test.ts
+**/*.test.js
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
