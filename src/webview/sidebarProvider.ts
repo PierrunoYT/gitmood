@@ -84,7 +84,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     if (!apiKey) {
       this._view?.webview.postMessage({
         type: 'error',
-        message: 'Please enter your Gemini API key'
+        message: 'Gemini API key not configured. Please enter your API key.'
       });
       return;
     }
@@ -97,7 +97,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
       const workspaceFolder = workspaceFolders[0];
       const config = vscode.workspace.getConfiguration('gitmood');
-      const commitLimit = config.get<number>('commitLimit', 20);
+      // Validate commitLimit to be between 1 and 100
+      const rawCommitLimit = config.get<number>('commitLimit', 20);
+      const commitLimit = Math.max(1, Math.min(rawCommitLimit, 100));
       const analyzeType = config.get<string>('analyzeType', 'full-diff');
 
       const commits = await this.gitService.getCommitsWithDiff(
@@ -121,7 +123,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
       // Convert commits to formatted string for AI analysis
       const commitsString = commits
-        .map(commit => `COMMIT: ${commit.message}\n${commit.diff || commit.stats || ''}`)
+        .map(commit => {
+          let result = `COMMIT: ${commit.message}`;
+          if (commit.author) result += `\nAUTHOR: ${commit.author}`;
+          if (commit.date) result += `\nDATE: ${commit.date}`;
+          result += `\n${commit.diff || commit.stats || ''}`;
+          return result;
+        })
         .join('\n\n');
       
       const analysis = await this.aiAnalyzer.analyzeCommits(commitsString);

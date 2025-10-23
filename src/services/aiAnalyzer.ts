@@ -29,7 +29,7 @@ export class AIAnalyzer {
 
     if (!apiKey) {
       throw new Error(
-        'Gemini API key not configured. Please set "gitmood.geminiApiKey" in VS Code settings.'
+        'Gemini API key not configured. Please enter your API key in the GitMood sidebar.'
       );
     }
 
@@ -131,6 +131,7 @@ export class AIAnalyzer {
         },
       });
 
+      // Extract and validate response text
       const jsonText = response.text?.trim();
       
       if (!jsonText) {

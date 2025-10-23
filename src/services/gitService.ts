@@ -79,28 +79,4 @@ export class GitService {
 
     return commits;
   }
-
-  async getRepositoryName(repoPath: string): Promise<string> {
-    try {
-      const name = path.basename(repoPath);
-      return name || 'Repository';
-    } catch {
-      return 'Repository';
-    }
-  }
-
-  async getRepositoryStats(repoPath: string): Promise<{ totalCommits: number; branches: number }> {
-    try {
-      const totalCommits = parseInt(
-        execSync('git rev-list --count HEAD', { cwd: repoPath, encoding: 'utf-8' }),
-        10
-      );
-      const branches = (
-        execSync('git branch -r', { cwd: repoPath, encoding: 'utf-8' }).split('\n').length - 1
-      );
-      return { totalCommits, branches };
-    } catch {
-      return { totalCommits: 0, branches: 0 };
-    }
-  }
 }

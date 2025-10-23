@@ -46,7 +46,7 @@ class AIAnalyzer {
         const config = vscode.workspace.getConfiguration('gitmood');
         const apiKey = config.get('geminiApiKey');
         if (!apiKey) {
-            throw new Error('Gemini API key not configured. Please set "gitmood.geminiApiKey" in VS Code settings.');
+            throw new Error('Gemini API key not configured. Please enter your API key in the GitMood sidebar.');
         }
         this.ai = new genai_1.GoogleGenAI({ apiKey });
     }
@@ -140,6 +140,7 @@ class AIAnalyzer {
                     temperature: 0.2,
                 },
             });
+            // Extract and validate response text
             const jsonText = response.text?.trim();
             if (!jsonText) {
                 throw new Error('Empty response from API.');
