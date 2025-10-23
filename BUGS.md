@@ -2,7 +2,7 @@
 
 ## 🔴 Critical Issues
 
-### 1. API Key Security & Redundancy Issue
+### 1. API Key Security & Redundancy Issue ✅
 **Location:** `src/webview/sidebarProvider.ts:36-42`
 
 **Problem:**
@@ -11,31 +11,37 @@
 - Method reads from config instead, making the parameter redundant
 - Creates confusion and potential for bugs
 
-**Current Code:**
+**Solution Applied:**
 ```typescript
 case 'analyze': {
-  await this._runAnalysis(data.apiKey);
+  await this._runAnalysis(); // No API key parameter
   break;
 }
 
-private async _runAnalysis(apiKey: string) {
-  // apiKey parameter is never used!
+private async _runAnalysis() {
+  // Verify API key is configured
   const config = vscode.workspace.getConfiguration('gitmood');
-  // ... reads from config instead
+  const apiKey = config.get<string>('geminiApiKey');
+  
+  if (!apiKey) {
+    // Show error message
+    return;
+  }
+  // ... rest of method
 }
 ```
 
-**Solution:**
-- Remove `apiKey` parameter from `_runAnalysis` method
-- Remove API key from webview message
-- Only read API key from VS Code configuration
+- Removed redundant `apiKey` parameter from `_runAnalysis` method
+- Removed API key from webview message passing
+- API key now only read from VS Code configuration
+- Improved security by centralizing API key access
 
 **Priority:** High
-**Status:** Open
+**Status:** ✅ SOLVED
 
 ---
 
-### 2. Git Command Injection Risk
+### 2. Git Command Injection Risk ✅
 **Location:** `src/services/gitService.ts:20-22`
 
 **Problem:**
@@ -43,43 +49,86 @@ private async _runAnalysis(apiKey: string) {
 - Currently safe because `limit` comes from config (number)
 - But risky if code is modified to accept user input
 
-**Current Code:**
+**Solution Applied:**
 ```typescript
-const cmd = fullDiff
-  ? `git --no-pager log -p --pretty=format:"${format}" --date=short -n ${limit}`
-  : `git --no-pager log --stat --pretty=format:"${format}" -n ${limit}`;
+// Validate and sanitize limit to prevent injection
+const sanitizedLimit = Math.max(1, Math.min(Math.floor(limit), 1000));
+
+// Use array-based command execution to prevent injection
+const args = fullDiff
+  ? ['--no-pager', 'log', '-p', `--pretty=format:${format}`, '--date=short', '-n', sanitizedLimit.toString()]
+  : ['--no-pager', 'log', '--stat', `--pretty=format:${format}`, '-n', sanitizedLimit.toString()];
+
+const result = spawnSync('git', args, {
+  cwd: repoPath,
+  encoding: 'utf-8',
+  maxBuffer: maxBuffer,
+});
 ```
 
-**Solution:**
-- Use array-based command execution with proper escaping
-- Or validate/sanitize inputs more strictly
+- Replaced `execSync` with `spawnSync` for array-based command execution
+- Added input validation and sanitization for limit parameter
+- Eliminated string interpolation in command construction
+- Commands now built as arrays, preventing injection attacks
 
 **Priority:** High
-**Status:** Open
+**Status:** ✅ SOLVED
 
 ---
 
 ## 🟠 Moderate Issues
 
-### 3. Memory Buffer Limitation
+### 3. Memory Buffer Limitation ✅
 **Location:** `src/services/gitService.ts:27`
 
 **Problem:**
 - 10MB buffer might not be enough for very large repositories
 - Buffer overflow errors not handled gracefully
 
-**Current Code:**
-```typescript
-maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large repos
+**Solution Applied:**
+
+**1. Added configuration option in `package.json`:**
+```json
+"gitmood.maxBufferSize": {
+  "type": "number",
+  "default": 10,
+  "minimum": 1,
+  "maximum": 100,
+  "description": "Maximum buffer size in MB for git operations (1-100 MB)"
+}
 ```
 
-**Solution:**
-- Make buffer size configurable
-- Add better error handling for buffer overflow
-- Consider streaming large diffs instead
+**2. Made buffer size configurable in code:**
+```typescript
+// Get configurable buffer size
+const config = vscode.workspace.getConfiguration('gitmood');
+const maxBufferMB = config.get<number>('maxBufferSize', 10);
+const maxBuffer = Math.max(1, Math.min(maxBufferMB, 100)) * 1024 * 1024;
+
+const result = spawnSync('git', args, {
+  cwd: repoPath,
+  encoding: 'utf-8',
+  maxBuffer: maxBuffer,
+});
+
+if (result.error) {
+  // Check if it's a buffer overflow error
+  if (result.error.message.includes('maxBuffer')) {
+    throw new Error(
+      `Git output exceeded buffer size (${maxBufferMB}MB). Try reducing commit limit or increasing maxBufferSize in settings.`
+    );
+  }
+  throw result.error;
+}
+```
+
+- Buffer size now configurable via VS Code settings (1-100 MB)
+- Added graceful error handling for buffer overflow
+- Provides helpful error message with actionable suggestions
+- Users can adjust buffer size based on repository size
 
 **Priority:** Medium
-**Status:** Open
+**Status:** ✅ SOLVED
 
 ---
 
@@ -207,18 +256,25 @@ if (!jsonText) {
 
 | Priority | Open | Solved | Total |
 |----------|------|--------|-------|
-| 🔴 Critical | 2 | 0 | 2 |
-| 🟠 Moderate | 1 | 0 | 1 |
+| 🔴 Critical | 0 | 2 | 2 |
+| 🟠 Moderate | 0 | 1 | 1 |
 | 🟡 Minor | 0 | 6 | 6 |
-| **Total** | **3** | **6** | **9** |
+| **Total** | **0** | **9** | **9** |
 
-### ✅ Recently Solved (2025-10-23)
+### ✅ All Issues Solved!
+
+**First Round (2025-10-23) - 6 Minor Issues:**
 1. Missing Author/Date in AI Analysis
 2. Unused Method: `getRepositoryName`
 3. Unused Method: `getRepositoryStats`
 4. Missing Input Validation
 5. Inconsistent Error Messages
 6. Missing Null Check Clarity
+
+**Second Round (2025-10-23) - 3 Critical/Moderate Issues:**
+7. API Key Security & Redundancy Issue
+8. Git Command Injection Risk
+9. Memory Buffer Limitation
 
 ---
 
@@ -231,16 +287,26 @@ if (!jsonText) {
 
 ---
 
-## 🎉 Progress Update
+## 🎉 All Issues Resolved!
 
-All 6 minor issues have been successfully resolved! The extension now has:
+**All 9 issues have been successfully fixed!** The extension now has:
+
+**Security & Reliability:**
+- ✅ Secure API key handling (no redundant passing)
+- ✅ Protection against command injection attacks
+- ✅ Configurable memory buffer with graceful error handling
+
+**Code Quality:**
 - ✅ Better AI analysis with author and date context
 - ✅ Cleaner codebase with unused methods removed
 - ✅ Input validation for commit limits (1-100)
 - ✅ Consistent error messaging across the extension
 - ✅ Improved code clarity and documentation
 
-**Remaining:** 2 Critical and 1 Moderate issue to be addressed in future updates.
+**New Features:**
+- ✅ Configurable buffer size setting (1-100 MB)
+- ✅ Better error messages for buffer overflow
+- ✅ Array-based git command execution
 
 ---
 

@@ -56,7 +56,7 @@ class SidebarProvider {
                     break;
                 }
                 case 'analyze': {
-                    await this._runAnalysis(data.apiKey);
+                    await this._runAnalysis();
                     break;
                 }
             }
@@ -82,7 +82,7 @@ class SidebarProvider {
             apiKey: apiKey
         });
     }
-    async _runAnalysis(apiKey) {
+    async _runAnalysis() {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
             this._view?.webview.postMessage({
@@ -91,6 +91,9 @@ class SidebarProvider {
             });
             return;
         }
+        // Verify API key is configured
+        const config = vscode.workspace.getConfiguration('gitmood');
+        const apiKey = config.get('geminiApiKey');
         if (!apiKey) {
             this._view?.webview.postMessage({
                 type: 'error',
@@ -104,7 +107,6 @@ class SidebarProvider {
                 message: 'Fetching commits...'
             });
             const workspaceFolder = workspaceFolders[0];
-            const config = vscode.workspace.getConfiguration('gitmood');
             // Validate commitLimit to be between 1 and 100
             const rawCommitLimit = config.get('commitLimit', 20);
             const commitLimit = Math.max(1, Math.min(rawCommitLimit, 100));

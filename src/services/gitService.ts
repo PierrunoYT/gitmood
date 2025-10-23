@@ -1,5 +1,6 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 export interface CommitData {
   message: string;
@@ -12,22 +13,44 @@ export interface CommitData {
 export class GitService {
   async getCommitsWithDiff(repoPath: string, limit: number = 20, fullDiff: boolean = true): Promise<CommitData[]> {
     try {
-      // Change to repo directory for git commands
+      // Validate and sanitize limit to prevent injection
+      const sanitizedLimit = Math.max(1, Math.min(Math.floor(limit), 1000));
+      
+      // Get configurable buffer size
+      const config = vscode.workspace.getConfiguration('gitmood');
+      const maxBufferMB = config.get<number>('maxBufferSize', 10);
+      const maxBuffer = Math.max(1, Math.min(maxBufferMB, 100)) * 1024 * 1024; // Convert MB to bytes
+      
+      // Use array-based command execution to prevent injection
       const format = fullDiff 
         ? 'COMMIT: %s%nAUTHOR: %an%nDATE: %ad%n'
         : 'COMMIT: %s%nAUTHOR: %an%nDATE: %ad%n--STATS--%n';
 
-      const cmd = fullDiff
-        ? `git --no-pager log -p --pretty=format:"${format}" --date=short -n ${limit}`
-        : `git --no-pager log --stat --pretty=format:"${format}" -n ${limit}`;
+      const args = fullDiff
+        ? ['--no-pager', 'log', '-p', `--pretty=format:${format}`, '--date=short', '-n', sanitizedLimit.toString()]
+        : ['--no-pager', 'log', '--stat', `--pretty=format:${format}`, '-n', sanitizedLimit.toString()];
 
-      const output = execSync(cmd, {
+      const result = spawnSync('git', args, {
         cwd: repoPath,
         encoding: 'utf-8',
-        maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large repos
+        maxBuffer: maxBuffer,
       });
 
-      return this.parseCommitOutput(output);
+      if (result.error) {
+        // Check if it's a buffer overflow error
+        if (result.error.message.includes('maxBuffer')) {
+          throw new Error(
+            `Git output exceeded buffer size (${maxBufferMB}MB). Try reducing commit limit or increasing maxBufferSize in settings.`
+          );
+        }
+        throw result.error;
+      }
+
+      if (result.status !== 0) {
+        throw new Error(result.stderr || 'Git command failed');
+      }
+
+      return this.parseCommitOutput(result.stdout);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to fetch commits: ${message}`);

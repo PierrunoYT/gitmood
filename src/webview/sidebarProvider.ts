@@ -38,7 +38,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case 'analyze': {
-          await this._runAnalysis(data.apiKey);
+          await this._runAnalysis();
           break;
         }
       }
@@ -70,7 +70,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private async _runAnalysis(apiKey: string) {
+  private async _runAnalysis() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     
     if (!workspaceFolders) {
@@ -81,6 +81,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    // Verify API key is configured
+    const config = vscode.workspace.getConfiguration('gitmood');
+    const apiKey = config.get<string>('geminiApiKey');
+    
     if (!apiKey) {
       this._view?.webview.postMessage({
         type: 'error',
@@ -96,7 +100,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       });
 
       const workspaceFolder = workspaceFolders[0];
-      const config = vscode.workspace.getConfiguration('gitmood');
       // Validate commitLimit to be between 1 and 100
       const rawCommitLimit = config.get<number>('commitLimit', 20);
       const commitLimit = Math.max(1, Math.min(rawCommitLimit, 100));
