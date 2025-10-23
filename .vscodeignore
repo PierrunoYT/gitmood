@@ -10,8 +10,12 @@ tsconfig.json
 .gitignore
 .gitattributes
 
-# Node modules (should be bundled)
-node_modules/**
+# Development dependencies only (keep production dependencies)
+node_modules/@types/**
+node_modules/@typescript-eslint/**
+node_modules/eslint/**
+node_modules/typescript/**
+node_modules/@vscode/test-electron/**
 
 # Development files
 .prettierignore
